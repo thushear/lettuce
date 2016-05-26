@@ -26,8 +26,8 @@ public class ClusterTopologyRefreshSchedulerTest {
 
     private ClusterTopologyRefreshScheduler sut;
 
-    private ClusterTopologyRefreshOptions immediateRefresh = new ClusterTopologyRefreshOptions.Builder().enabled(true)
-            .enableAllAdaptiveRefreshTriggers().refreshPeriod(0, TimeUnit.MILLISECONDS).build();
+    private ClusterTopologyRefreshOptions immediateRefresh = new ClusterTopologyRefreshOptions.Builder().enablePeriodicRefresh(1, TimeUnit.MILLISECONDS)
+            .enableAllAdaptiveRefreshTriggers().build();
 
     private ClusterClientOptions clusterClientOptions = new ClusterClientOptions.Builder()
             .topologyRefreshOptions(immediateRefresh).build();
@@ -114,7 +114,7 @@ public class ClusterTopologyRefreshSchedulerTest {
     public void shouldTriggerRefreshOnAskRedirection() throws Exception {
 
         ClusterTopologyRefreshOptions clusterTopologyRefreshOptions = new ClusterTopologyRefreshOptions.Builder()
-                .enableAllAdaptiveRefreshTriggers().refreshPeriod(0, TimeUnit.MILLISECONDS).build();
+                .enableAllAdaptiveRefreshTriggers().build();
 
         ClusterClientOptions clusterClientOptions = new ClusterClientOptions.Builder()
                 .topologyRefreshOptions(clusterTopologyRefreshOptions).build();
@@ -178,7 +178,7 @@ public class ClusterTopologyRefreshSchedulerTest {
     @Test
     public void shouldRateLimitAdaptiveRequests() throws Exception {
 
-        ClusterTopologyRefreshOptions adaptiveTimeout = new ClusterTopologyRefreshOptions.Builder().enabled(false)
+        ClusterTopologyRefreshOptions adaptiveTimeout = new ClusterTopologyRefreshOptions.Builder().enablePeriodicRefresh(false)
                 .enableAllAdaptiveRefreshTriggers().adaptiveRefreshTriggersTimeout(50, TimeUnit.MILLISECONDS).build();
 
         ClusterClientOptions clusterClientOptions = new ClusterClientOptions.Builder().topologyRefreshOptions(adaptiveTimeout)

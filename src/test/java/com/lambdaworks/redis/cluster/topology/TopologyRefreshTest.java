@@ -58,7 +58,8 @@ public class TopologyRefreshTest extends AbstractTest {
     @Test
     public void changeTopologyWhileOperations() throws Exception {
 
-        ClusterTopologyRefreshOptions topologyRefreshOptions = new ClusterTopologyRefreshOptions.Builder().enabled(true)//
+        ClusterTopologyRefreshOptions topologyRefreshOptions = new ClusterTopologyRefreshOptions.Builder()
+                .enablePeriodicRefresh(true)//
                 .refreshPeriod(1, TimeUnit.SECONDS)//
                 .build();
         clusterClient.setOptions(new ClusterClientOptions.Builder().topologyRefreshOptions(topologyRefreshOptions).build());
@@ -141,8 +142,7 @@ public class TopologyRefreshTest extends AbstractTest {
     @Test
     public void adaptiveTopologyUpdateIsRateLimited() throws Exception {
 
-        ClusterTopologyRefreshOptions topologyRefreshOptions = new ClusterTopologyRefreshOptions.Builder().enabled(true)//
-                .refreshPeriod(1, TimeUnit.HOURS)//
+        ClusterTopologyRefreshOptions topologyRefreshOptions = new ClusterTopologyRefreshOptions.Builder()//
                 .adaptiveRefreshTriggersTimeout(1, TimeUnit.HOURS)//
                 .refreshTriggersReconnectAttempts(0)//
                 .enableAllAdaptiveRefreshTriggers()//
@@ -170,8 +170,7 @@ public class TopologyRefreshTest extends AbstractTest {
     @Test
     public void adaptiveTopologyUpdatetUsesTimeout() throws Exception {
 
-        ClusterTopologyRefreshOptions topologyRefreshOptions = new ClusterTopologyRefreshOptions.Builder().enabled(true)//
-                .refreshPeriod(1, TimeUnit.HOURS)//
+        ClusterTopologyRefreshOptions topologyRefreshOptions = new ClusterTopologyRefreshOptions.Builder()//
                 .adaptiveRefreshTriggersTimeout(500, TimeUnit.MILLISECONDS)//
                 .refreshTriggersReconnectAttempts(0)//
                 .enableAllAdaptiveRefreshTriggers()//
@@ -199,8 +198,7 @@ public class TopologyRefreshTest extends AbstractTest {
     @Test
     public void adaptiveTriggerDoesNotFireOnSingleReconnect() throws Exception {
 
-        ClusterTopologyRefreshOptions topologyRefreshOptions = new ClusterTopologyRefreshOptions.Builder().enabled(true)//
-                .refreshPeriod(1, TimeUnit.HOURS)//
+        ClusterTopologyRefreshOptions topologyRefreshOptions = new ClusterTopologyRefreshOptions.Builder()//
                 .enableAllAdaptiveRefreshTriggers()//
                 .build();
         clusterClient.setOptions(new ClusterClientOptions.Builder().topologyRefreshOptions(topologyRefreshOptions).build());
@@ -218,9 +216,8 @@ public class TopologyRefreshTest extends AbstractTest {
     @Test
     public void adaptiveTriggerOnMoveRedirection() throws Exception {
 
-        ClusterTopologyRefreshOptions topologyRefreshOptions = new ClusterTopologyRefreshOptions.Builder().enabled(true)//
-                .refreshPeriod(1, TimeUnit.HOURS)//
-                .enableAllAdaptiveRefreshTriggers()//
+        ClusterTopologyRefreshOptions topologyRefreshOptions = new ClusterTopologyRefreshOptions.Builder()//
+                .enableAdaptiveRefreshTrigger(ClusterTopologyRefreshOptions.RefreshTrigger.MOVED_REDIRECT)//
                 .build();
         clusterClient.setOptions(new ClusterClientOptions.Builder().topologyRefreshOptions(topologyRefreshOptions).build());
 
@@ -256,8 +253,7 @@ public class TopologyRefreshTest extends AbstractTest {
             BiFunction<RedisAdvancedClusterAsyncCommands<String, String>, RedisClusterNode, BaseRedisAsyncCommands> function)
             throws Exception {
 
-        ClusterTopologyRefreshOptions topologyRefreshOptions = new ClusterTopologyRefreshOptions.Builder().enabled(true)//
-                .refreshPeriod(1, TimeUnit.HOURS)//
+        ClusterTopologyRefreshOptions topologyRefreshOptions = new ClusterTopologyRefreshOptions.Builder()//
                 .refreshTriggersReconnectAttempts(0)//
                 .enableAllAdaptiveRefreshTriggers()//
                 .build();

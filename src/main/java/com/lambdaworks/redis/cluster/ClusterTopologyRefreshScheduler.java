@@ -36,11 +36,11 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
 
         if (isEventLoopActive() && redisClusterClient.getClusterClientOptions() != null) {
             if (!redisClusterClient.getClusterClientOptions().isRefreshClusterView()) {
-                logger.debug("ClusterTopologyRefresh is disabled");
+                logger.debug("Periodic ClusterTopologyRefresh is disabled");
                 return;
             }
         } else {
-            logger.debug("ClusterTopologyRefresh is disabled");
+            logger.debug("Periodic ClusterTopologyRefresh is disabled");
             return;
         }
 
@@ -58,7 +58,7 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
         if (isEventLoopActive() && redisClusterClient.getClusterClientOptions() != null) {
             clientResources.eventExecutorGroup().submit(clusterTopologyRefreshTask);
         } else {
-            logger.debug("ClusterTopologyRefresh is disabled");
+            logger.debug("Adaptive ClusterTopologyRefresh is disabled");
         }
     }
 

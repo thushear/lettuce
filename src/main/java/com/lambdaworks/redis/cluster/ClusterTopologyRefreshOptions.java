@@ -13,7 +13,7 @@ import com.lambdaworks.redis.internal.LettuceAssert;
  */
 public class ClusterTopologyRefreshOptions {
 
-    public static final boolean DEFAULT_ENABLED = false;
+    public static final boolean DEFAULT_PERIODIC_REFRESH_ENABLED = false;
     public static final long DEFAULT_REFRESH_PERIOD = 60;
     public static final TimeUnit DEFAULT_REFRESH_PERIOD_UNIT = TimeUnit.SECONDS;
     public static final boolean DEFAULT_DYNAMIC_REFRESH_SOURCES = true;
@@ -23,7 +23,7 @@ public class ClusterTopologyRefreshOptions {
     public static final int DEFAULT_REFRESH_TRIGGERS_RECONNECT_ATTEMPTS = 5;
     public static final boolean DEFAULT_CLOSE_STALE_CONNECTIONS = true;
 
-    private final boolean enabled;
+    private final boolean periodicRefreshEnabled;
     private final long refreshPeriod;
     private final TimeUnit refreshPeriodUnit;
     private final boolean closeStaleConnections;
@@ -35,7 +35,7 @@ public class ClusterTopologyRefreshOptions {
 
     protected ClusterTopologyRefreshOptions(Builder builder) {
 
-        this.enabled = builder.enabled;
+        this.periodicRefreshEnabled = builder.periodicRefreshEnabled;
         this.refreshPeriod = builder.refreshPeriod;
         this.refreshPeriodUnit = builder.refreshPeriodUnit;
         this.closeStaleConnections = builder.closeStaleConnections;
@@ -48,7 +48,7 @@ public class ClusterTopologyRefreshOptions {
 
     protected ClusterTopologyRefreshOptions(ClusterTopologyRefreshOptions original) {
 
-        this.enabled = original.enabled;
+        this.periodicRefreshEnabled = original.periodicRefreshEnabled;
         this.refreshPeriod = original.refreshPeriod;
         this.refreshPeriodUnit = original.refreshPeriodUnit;
         this.closeStaleConnections = original.closeStaleConnections;
@@ -74,7 +74,7 @@ public class ClusterTopologyRefreshOptions {
      */
     public static class Builder {
 
-        private boolean enabled = DEFAULT_ENABLED;
+        private boolean periodicRefreshEnabled = DEFAULT_PERIODIC_REFRESH_ENABLED;
         private long refreshPeriod = DEFAULT_REFRESH_PERIOD;
         private TimeUnit refreshPeriodUnit = DEFAULT_REFRESH_PERIOD_UNIT;
         private boolean closeStaleConnections = DEFAULT_CLOSE_STALE_CONNECTIONS;
@@ -85,27 +85,53 @@ public class ClusterTopologyRefreshOptions {
         private int refreshTriggersReconnectAttempts = DEFAULT_REFRESH_TRIGGERS_RECONNECT_ATTEMPTS;
 
         /**
+         * Enables periodic cluster topology updates. The client starts updating the cluster topology in the intervals of
+         * {@link Builder#refreshPeriod}. Defaults to {@literal false}. See {@link #DEFAULT_PERIODIC_REFRESH_ENABLED}.
+         *
+         * @return {@code this}
+         */
+        public Builder enablePeriodicRefresh() {
+            return enablePeriodicRefresh(true);
+        }
+
+        /**
          * Enable regular cluster topology updates. The client starts updating the cluster topology in the intervals of
-         * {@link Builder#refreshPeriod} /{@link Builder#adaptiveRefreshTimeoutUnit}. Defaults to {@literal false}. See
-         * {@link #DEFAULT_ENABLED}.
+         * {@link Builder#refreshPeriod}. Defaults to {@literal false}. See {@link #DEFAULT_PERIODIC_REFRESH_ENABLED}.
          *
          * @param enabled {@literal true} enable regular cluster topology updates or {@literal false} to disable auto-updating
          * @return {@code this}
          */
-        public Builder enabled(boolean enabled) {
-            this.enabled = enabled;
+        public Builder enablePeriodicRefresh(boolean enabled) {
+            this.periodicRefreshEnabled = enabled;
             return this;
+        }
+
+        /**
+         * Enables periodic refresh and sets the refresh period. Defaults to {@literal 60 SECONDS}. See
+         * {@link #DEFAULT_REFRESH_PERIOD} and {@link #DEFAULT_REFRESH_PERIOD_UNIT}. This method is a shortcut for
+         * {@link #refreshPeriod(long, TimeUnit)} and {@link #enablePeriodicRefresh()}.
+         *
+         * @param refreshPeriod period for triggering topology updates, must be greater {@literal 0}
+         * @param refreshPeriodUnit unit for {@code refreshPeriod}, must not be {@literal null}
+         * @return {@code this}
+         */
+        public Builder enablePeriodicRefresh(long refreshPeriod, TimeUnit refreshPeriodUnit) {
+            return refreshPeriod(refreshPeriod, refreshPeriodUnit).enablePeriodicRefresh();
         }
 
         /**
          * Set the refresh period. Defaults to {@literal 60 SECONDS}. See {@link #DEFAULT_REFRESH_PERIOD} and
          * {@link #DEFAULT_REFRESH_PERIOD_UNIT}.
          *
-         * @param refreshPeriod period for triggering topology updates
-         * @param refreshPeriodUnit unit for {@code refreshPeriod}
+         * @param refreshPeriod period for triggering topology updates, must be greater {@literal 0}
+         * @param refreshPeriodUnit unit for {@code refreshPeriod}, must not be {@literal null}
          * @return {@code this}
          */
         public Builder refreshPeriod(long refreshPeriod, TimeUnit refreshPeriodUnit) {
+
+            LettuceAssert.isTrue(refreshPeriod > 0, "RefreshPeriod must be greater 0");
+            LettuceAssert.notNull(refreshPeriodUnit, "TimeUnit must not be null");
+
             this.refreshPeriod = refreshPeriod;
             this.refreshPeriodUnit = refreshPeriodUnit;
             return this;
@@ -113,7 +139,7 @@ public class ClusterTopologyRefreshOptions {
 
         /**
          * Flag, whether to close stale connections when refreshing the cluster topology. Defaults to {@literal true}. Comes
-         * only into effect if {@link #isEnabled()} is {@literal true}. See
+         * only into effect if {@link #isPeriodicRefreshEnabled()} is {@literal true}. See
          * {@link ClusterTopologyRefreshOptions#DEFAULT_CLOSE_STALE_CONNECTIONS}.
          *
          * @param closeStaleConnections {@literal true} if stale connections are cleaned up after cluster topology updates
@@ -150,7 +176,7 @@ public class ClusterTopologyRefreshOptions {
          * @param refreshTrigger one or more {@link RefreshTrigger} to enabled
          * @return {@code this}
          */
-        public Builder adaptiveRefreshTrigger(RefreshTrigger... refreshTrigger) {
+        public Builder enableAdaptiveRefreshTrigger(RefreshTrigger... refreshTrigger) {
             LettuceAssert.notNull(refreshTrigger, "RefreshTriggers must not be null");
             LettuceAssert.noNullElements(refreshTrigger, "RefreshTriggers must not contain null elements");
             adaptiveRefreshTriggers.addAll(Arrays.asList(refreshTrigger));
@@ -216,8 +242,8 @@ public class ClusterTopologyRefreshOptions {
      * 
      * @return {@literal true} it the cluster topology view is updated periodically
      */
-    public boolean isEnabled() {
-        return enabled;
+    public boolean isPeriodicRefreshEnabled() {
+        return periodicRefreshEnabled;
     }
 
     /**
@@ -240,7 +266,7 @@ public class ClusterTopologyRefreshOptions {
 
     /**
      * Flag, whether to close stale connections when refreshing the cluster topology. Defaults to {@literal true}. Comes only
-     * into effect if {@link #isEnabled()} is {@literal true}.
+     * into effect if {@link #isPeriodicRefreshEnabled()} is {@literal true}.
      * 
      * @return {@literal true} if stale connections are cleaned up after cluster topology updates
      */
@@ -311,12 +337,12 @@ public class ClusterTopologyRefreshOptions {
     }
 
     /**
-     * Create a new {@link ClusterTopologyRefreshOptions} using default settings.
+     * Create a new {@link ClusterTopologyRefreshOptions} using default settings with enabled periodic and adaptive refresh.
      *
      * @return a new instance of default cluster client client options.
      */
     public static ClusterTopologyRefreshOptions enabled() {
-        return new Builder().enabled(true).enableAllAdaptiveRefreshTriggers().build();
+        return new Builder().enablePeriodicRefresh().enableAllAdaptiveRefreshTriggers().build();
     }
 
     /**

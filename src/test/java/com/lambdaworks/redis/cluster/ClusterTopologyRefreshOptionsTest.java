@@ -17,9 +17,9 @@ public class ClusterTopologyRefreshOptionsTest {
     public void testBuilder() throws Exception {
 
         ClusterTopologyRefreshOptions options = new ClusterTopologyRefreshOptions.Builder()//
-                .enabled(true).refreshPeriod(10, TimeUnit.MINUTES)//
+                .enablePeriodicRefresh(true).refreshPeriod(10, TimeUnit.MINUTES)//
                 .dynamicRefreshSources(false) //
-                .adaptiveRefreshTrigger(RefreshTrigger.MOVED_REDIRECT)//
+                .enableAdaptiveRefreshTrigger(RefreshTrigger.MOVED_REDIRECT)//
                 .adaptiveRefreshTriggersTimeout(15, TimeUnit.MILLISECONDS)//
                 .closeStaleConnections(false)//
                 .refreshTriggersReconnectAttempts(2)//
@@ -28,7 +28,7 @@ public class ClusterTopologyRefreshOptionsTest {
         assertThat(options.getRefreshPeriod()).isEqualTo(10);
         assertThat(options.getRefreshPeriodUnit()).isEqualTo(TimeUnit.MINUTES);
         assertThat(options.isCloseStaleConnections()).isEqualTo(false);
-        assertThat(options.isEnabled()).isTrue();
+        assertThat(options.isPeriodicRefreshEnabled()).isTrue();
         assertThat(options.useDynamicRefreshSources()).isFalse();
         assertThat(options.getAdaptiveRefreshTimeout()).isEqualTo(15);
         assertThat(options.getAdaptiveRefreshTimeoutUnit()).isEqualTo(TimeUnit.MILLISECONDS);
@@ -40,9 +40,9 @@ public class ClusterTopologyRefreshOptionsTest {
     public void testCopy() throws Exception {
 
         ClusterTopologyRefreshOptions master = new ClusterTopologyRefreshOptions.Builder()//
-                .enabled(true).refreshPeriod(10, TimeUnit.MINUTES)//
+                .enablePeriodicRefresh(true).refreshPeriod(10, TimeUnit.MINUTES)//
                 .dynamicRefreshSources(false) //
-                .adaptiveRefreshTrigger(RefreshTrigger.MOVED_REDIRECT)//
+                .enableAdaptiveRefreshTrigger(RefreshTrigger.MOVED_REDIRECT)//
                 .adaptiveRefreshTriggersTimeout(15, TimeUnit.MILLISECONDS)//
                 .closeStaleConnections(false)//
                 .refreshTriggersReconnectAttempts(2)//
@@ -53,7 +53,7 @@ public class ClusterTopologyRefreshOptionsTest {
         assertThat(options.getRefreshPeriod()).isEqualTo(10);
         assertThat(options.getRefreshPeriodUnit()).isEqualTo(TimeUnit.MINUTES);
         assertThat(options.isCloseStaleConnections()).isEqualTo(false);
-        assertThat(options.isEnabled()).isTrue();
+        assertThat(options.isPeriodicRefreshEnabled()).isTrue();
         assertThat(options.useDynamicRefreshSources()).isFalse();
         assertThat(options.getAdaptiveRefreshTimeout()).isEqualTo(15);
         assertThat(options.getAdaptiveRefreshTimeoutUnit()).isEqualTo(TimeUnit.MILLISECONDS);
@@ -69,7 +69,7 @@ public class ClusterTopologyRefreshOptionsTest {
         assertThat(options.getRefreshPeriod()).isEqualTo(ClusterTopologyRefreshOptions.DEFAULT_REFRESH_PERIOD);
         assertThat(options.getRefreshPeriodUnit()).isEqualTo(ClusterTopologyRefreshOptions.DEFAULT_REFRESH_PERIOD_UNIT);
         assertThat(options.isCloseStaleConnections()).isEqualTo(ClusterTopologyRefreshOptions.DEFAULT_CLOSE_STALE_CONNECTIONS);
-        assertThat(options.isEnabled()).isEqualTo(ClusterTopologyRefreshOptions.DEFAULT_ENABLED).isFalse();
+        assertThat(options.isPeriodicRefreshEnabled()).isEqualTo(ClusterTopologyRefreshOptions.DEFAULT_PERIODIC_REFRESH_ENABLED).isFalse();
         assertThat(options.useDynamicRefreshSources()).isEqualTo(ClusterTopologyRefreshOptions.DEFAULT_DYNAMIC_REFRESH_SOURCES)
                 .isTrue();
         assertThat(options.getAdaptiveRefreshTimeout())
@@ -87,7 +87,7 @@ public class ClusterTopologyRefreshOptionsTest {
 
         ClusterTopologyRefreshOptions options = ClusterTopologyRefreshOptions.enabled();
 
-        assertThat(options.isEnabled()).isTrue();
+        assertThat(options.isPeriodicRefreshEnabled()).isTrue();
         assertThat(options.useDynamicRefreshSources()).isTrue();
         assertThat(options.getAdaptiveRefreshTriggers()).contains(RefreshTrigger.ASK_REDIRECT, RefreshTrigger.MOVED_REDIRECT,
                 RefreshTrigger.PERSISTENT_RECONNECTS);

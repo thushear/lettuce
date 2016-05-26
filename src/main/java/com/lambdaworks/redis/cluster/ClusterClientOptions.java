@@ -33,7 +33,7 @@ public class ClusterClientOptions extends ClientOptions {
 
         if (refreshOptions == null) {
             refreshOptions = new ClusterTopologyRefreshOptions.Builder()//
-                    .enabled(builder.refreshClusterView)//
+                    .enablePeriodicRefresh(builder.refreshClusterView)//
                     .refreshPeriod(builder.refreshPeriod, builder.refreshPeriodUnit)//
                     .closeStaleConnections(builder.closeStaleConnections)//
                     .build();
@@ -83,7 +83,7 @@ public class ClusterClientOptions extends ClientOptions {
          *        auto-updating
          * @return {@code this}
          * @deprecated Use {@link #topologyRefreshOptions}, see
-         *             {@link com.lambdaworks.redis.cluster.ClusterTopologyRefreshOptions.Builder#enabled(boolean)}
+         *             {@link com.lambdaworks.redis.cluster.ClusterTopologyRefreshOptions.Builder#enablePeriodicRefresh(boolean)}
          */
         @Deprecated
         public Builder refreshClusterView(boolean refreshClusterView) {
@@ -213,7 +213,7 @@ public class ClusterClientOptions extends ClientOptions {
      * @return {@literal true} it the cluster topology view is updated periodically
      */
     public boolean isRefreshClusterView() {
-        return topologyRefreshOptions.isEnabled();
+        return topologyRefreshOptions.isPeriodicRefreshEnabled();
     }
 
     /**

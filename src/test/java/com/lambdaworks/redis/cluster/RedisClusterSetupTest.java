@@ -23,6 +23,7 @@ import com.lambdaworks.Wait;
 import com.lambdaworks.category.SlowTests;
 import com.lambdaworks.redis.*;
 import com.lambdaworks.redis.api.async.RedisAsyncCommands;
+import com.lambdaworks.redis.cluster.api.StatefulRedisClusterConnection;
 import com.lambdaworks.redis.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import com.lambdaworks.redis.cluster.api.async.RedisClusterAsyncCommands;
 import com.lambdaworks.redis.cluster.api.sync.RedisAdvancedClusterCommands;
@@ -181,20 +182,28 @@ public class RedisClusterSetupTest extends AbstractTest {
     @Test
     public void changeTopologyWhileOperations() throws Exception {
 
-        clusterClient.setOptions(
-                new ClusterClientOptions.Builder().refreshClusterView(true).refreshPeriod(1, TimeUnit.SECONDS).build());
-        RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connect().async();
-
         ClusterSetup.setup2Masters(clusterRule);
-        assertRoutedExecution(clusterConnection);
 
-        clusterClient.setOptions(new ClusterClientOptions.Builder().refreshClusterView(false).build());
+        ClusterTopologyRefreshOptions clusterTopologyRefreshOptions = new ClusterTopologyRefreshOptions.Builder()
+                .enableAllAdaptiveRefreshTriggers().build();
+
+        clusterClient
+                .setOptions(new ClusterClientOptions.Builder().topologyRefreshOptions(clusterTopologyRefreshOptions).build());
+        StatefulRedisClusterConnection<String, String> connection = clusterClient.connect();
+        RedisAdvancedClusterCommands<String, String> sync = connection.sync();
+        RedisAdvancedClusterAsyncCommands<String, String> async = connection.async();
+
+        Partitions partitions = connection.getPartitions();
+        assertThat(partitions.getPartitionBySlot(0).getSlots().size()).isEqualTo(12000);
+        assertThat(partitions.getPartitionBySlot(16380).getSlots().size()).isEqualTo(4384);
+        assertRoutedExecution(async);
+
+        sync.del("A");
+        sync.del("t");
+        sync.del("p");
 
         shiftAllSlotsToNode1();
-        assertRoutedExecution(clusterConnection);
-
-        clusterClient.setOptions(
-                new ClusterClientOptions.Builder().refreshClusterView(true).refreshPeriod(1, TimeUnit.SECONDS).build());
+        assertRoutedExecution(async);
 
         Wait.untilTrue(() -> {
             if (clusterClient.getPartitions().size() == 2) {
@@ -208,9 +217,13 @@ public class RedisClusterSetupTest extends AbstractTest {
             return false;
         }).waitOrTimeout();
 
-        assertRoutedExecution(clusterConnection);
+        assertThat(partitions.getPartitionBySlot(0).getSlots().size()).isEqualTo(16384);
 
-        clusterConnection.close();
+        assertThat(sync.get("A")).isEqualTo("value");
+        assertThat(sync.get("t")).isEqualTo("value");
+        assertThat(sync.get("p")).isEqualTo("value");
+
+        async.close();
     }
 
     @Test
@@ -378,8 +391,7 @@ public class RedisClusterSetupTest extends AbstractTest {
     @Test
     public void expireStaleHostAndPortConnections() throws Exception {
 
-        clusterClient.setOptions(
-                new ClusterClientOptions.Builder().build());
+        clusterClient.setOptions(new ClusterClientOptions.Builder().build());
         RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connectClusterAsync();
 
         ClusterSetup.setup2Masters(clusterRule);

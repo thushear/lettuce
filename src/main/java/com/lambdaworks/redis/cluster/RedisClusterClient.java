@@ -111,8 +111,9 @@ public class RedisClusterClient extends AbstractRedisClient {
 
     protected AtomicBoolean clusterTopologyRefreshActivated = new AtomicBoolean(false);
 
-    private volatile ClusterEventListener clusterEventListener = ClusterEventListener.NO_OP;
     private final ClusterTopologyRefresh refresh = new ClusterTopologyRefresh(new NodeConnectionFactoryImpl(), getResources());
+    private final ClusterTopologyRefreshScheduler clusterTopologyRefreshScheduler = new ClusterTopologyRefreshScheduler(this,
+            getResources());
 
     private Partitions partitions;
     private Iterable<RedisURI> initialUris = Collections.emptySet();
@@ -492,7 +493,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         CommandHandler<K, V> handler = new CommandHandler<K, V>(clientOptions, clientResources, queue);
 
         ClusterDistributionChannelWriter<K, V> clusterWriter = new ClusterDistributionChannelWriter<K, V>(clientOptions,
-                handler, clusterEventListener);
+                handler, clusterTopologyRefreshScheduler);
         PooledClusterConnectionProvider<K, V> pooledClusterConnectionProvider = new PooledClusterConnectionProvider<K, V>(this,
                 clusterWriter, codec);
 
@@ -555,7 +556,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         PubSubCommandHandler<K, V> handler = new PubSubCommandHandler<K, V>(clientOptions, clientResources, queue, codec);
 
         ClusterDistributionChannelWriter<K, V> clusterWriter = new ClusterDistributionChannelWriter<K, V>(clientOptions,
-                handler, clusterEventListener);
+                handler, clusterTopologyRefreshScheduler);
         PooledClusterConnectionProvider<K, V> pooledClusterConnectionProvider = new PooledClusterConnectionProvider<K, V>(this,
                 clusterWriter, codec);
 
@@ -660,7 +661,7 @@ public class RedisClusterClient extends AbstractRedisClient {
             connectionBuilder = ConnectionBuilder.connectionBuilder();
         }
 
-        connectionBuilder.reconnectionListener(new ReconnectEventListener(clusterEventListener));
+        connectionBuilder.reconnectionListener(new ReconnectEventListener(clusterTopologyRefreshScheduler));
         connectionBuilder.clientOptions(clientOptions);
         connectionBuilder.clientResources(clientResources);
         connectionBuilder(handler, connection, socketAddressSupplier, connectionBuilder, connectionSettings);
@@ -756,17 +757,16 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         if (getOptions() instanceof ClusterClientOptions) {
             ClusterClientOptions options = (ClusterClientOptions) getOptions();
+            ClusterTopologyRefreshOptions topologyRefreshOptions = options.getTopologyRefreshOptions();
 
-            if (!options.isRefreshClusterView() || clusterTopologyRefreshActivated.get()) {
+            if (!topologyRefreshOptions.isPeriodicRefreshEnabled()
+                    || clusterTopologyRefreshActivated.get()) {
                 return;
             }
 
             if (clusterTopologyRefreshActivated.compareAndSet(false, true)) {
-
-                ClusterTopologyRefreshScheduler r = new ClusterTopologyRefreshScheduler(this, this.getResources());
-                this.clusterEventListener = r;
-                genericWorkerPool.scheduleAtFixedRate(r, options.getRefreshPeriod(), options.getRefreshPeriod(),
-                        options.getRefreshPeriodUnit());
+                genericWorkerPool.scheduleAtFixedRate(clusterTopologyRefreshScheduler, options.getRefreshPeriod(),
+                        options.getRefreshPeriod(), options.getRefreshPeriodUnit());
             }
         }
     }

@@ -17,9 +17,8 @@ public class ConnectToRedisClusterWithTopologyRefreshing {
 
         RedisClusterClient redisClient = RedisClusterClient.create("redis://password@localhost:7379");
         ClusterTopologyRefreshOptions clusterTopologyRefreshOptions = new ClusterTopologyRefreshOptions.Builder()//
-                .enabled(true)//
+                .enablePeriodicRefresh(30, TimeUnit.MINUTES)//
                 .enableAllAdaptiveRefreshTriggers()//
-                .refreshPeriod(30, TimeUnit.MINUTES)//
                 .build();
 
         ClusterClientOptions clusterClientOptions = new ClusterClientOptions.Builder()//
